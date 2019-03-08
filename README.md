@@ -48,6 +48,7 @@ Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI) and 
 5. Add as page to the TESS-ExoClass candidate reports
 6. SPOC DV reports available and links
 7. Someway (lightkurve?) to load a jupyter notebook or other on demand light curve examination product from the web.
+8. The coding is atrocious.  Need to make many of the MAST calls into functions to clean things up.
 
 ### DEPENDENCIES:
 - python 3+
