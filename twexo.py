@@ -437,7 +437,8 @@ if __name__ == '__main__':
 <a href="{simbadURL}" target="_blank">Simbad</a> |
 <a href="{vizURL}" target="_blank">Vizier</a> |
 <a href="{mstURL}" target="_blank">MAST TESS Data Holdings</a> |
-<a href="{irsaURL}" target="_blank">IRSA Finderchart</a> |
+#<a href="{irsaURL}" target="_blank">IRSA Finderchart</a>
+IRSA Finderchart Link Currently Broken |
 <a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> 
 </body>
 </html>
@@ -452,7 +453,7 @@ if __name__ == '__main__':
     # If the user requested a web explode load em all!
     if args.explode:
         webbrowser.open(esoURL, new=2)
-        webbrowser.open(irsaURL, new=2)
+        #webbrowser.open(irsaURL, new=2)
         webbrowser.open(mstURL, new=2)
         webbrowser.open(vizURL, new=2)
         webbrowser.open(simbadURL, new=2)
