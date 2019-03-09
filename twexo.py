@@ -55,6 +55,8 @@ import numpy as np
 import os
 import argparse
 from astropy.coordinates import SkyCoord
+from astropy.time import Time, TimezoneInfo
+import astropy.units as u
 import sys
 import datetime
 import json
@@ -180,6 +182,13 @@ if __name__ == '__main__':
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
         stargaia = outObject['data'][0]['GAIA']
+        starPmRa = outObject['data'][0]['pmRA']
+        starPmDec = outObject['data'][0]['pmDEC']
+        starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
+        starPmRaE = outObject['data'][0]['e_pmRA']
+        starPmDecE = outObject['data'][0]['e_pmDEC']
+        starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        
         
     # TOI specified get toi -> tic mapping from table at exofop
     if args.toi is not None:
@@ -221,6 +230,13 @@ if __name__ == '__main__':
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
         stargaia = outObject['data'][0]['GAIA']
+        starPmRa = outObject['data'][0]['pmRA']
+        starPmDec = outObject['data'][0]['pmDEC']
+        starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
+        starPmRaE = outObject['data'][0]['e_pmRA']
+        starPmDecE = outObject['data'][0]['e_pmDEC']
+        starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+
         
         #print('TOI: {0} is associated with TIC: {1} at ExoFop'.format(args.toi, useTIC))
 
@@ -308,6 +324,12 @@ if __name__ == '__main__':
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
         stargaia = outObject['data'][0]['GAIA']
+        starPmRa = outObject['data'][0]['pmRA']
+        starPmDec = outObject['data'][0]['pmDEC']
+        starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
+        starPmRaE = outObject['data'][0]['e_pmRA']
+        starPmDecE = outObject['data'][0]['e_pmDEC']
+        starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
 
     # If we weren't given TOI number check exofop to see if it has TOIs
     if args.toi is None:
@@ -354,10 +376,13 @@ if __name__ == '__main__':
 
         
     # IRSA finderchart
-    irsaURLPart1 = 'https://irsa.ipac.caltech.edu/applications/finderchart/?__action=table.search&request=%7B%22startIdx%22%3A0%2C%22pageSize%22%3A100%2C%22id%22%3A%22QueryFinderChartWeb%22%2C%22tbl_id%22%3A%22results%22%2C%22UserTargetWorldPt%22%3A%22126.61572%3B10.08046%3BEQ_J2000%3B'
+    irsaURLPart1 = 'https://irsa.ipac.caltech.edu/applications/finderchart/servlet/api?locstr='
+    #irsaURLPart1 = 'https://irsa.ipac.caltech.edu/applications/finderchart/?__action=table.search&request=%7B%22startIdx%22%3A0%2C%22pageSize%22%3A100%2C%22id%22%3A%22QueryFinderChartWeb%22%2C%22tbl_id%22%3A%22results%22%2C%22UserTargetWorldPt%22%3A%22126.61572%3B10.08046%3BEQ_J2000%3B'
     irsaURLPart2 = urlencode('2MASS J{0}'.format(star2mass))
-    irsaURLPart3 = '%3Bned%22%2C%22imageSizeAndUnit%22%3A%220.042777777777777776%22%2C%22thumbnail_size%22%3A%22256%22%2C%22selectImage%22%3A%22dss%2Csdss%2C2mass%22%2C%22searchCatalog%22%3A%22no%22%2C%22ckgDSS%22%3A%22dss1Blue%2Cdss1Red%2Cdss2Blue%2Cdss2Red%2Cdss2IR%22%2C%22ckgSDSS%22%3A%22u%2Cg%2Cr%2Cz%22%2C%22ckg2MASS%22%3A%22j%2Ch%2Ck%22%2C%22imageSearchOptions%22%3A%22closed%22%2C%22META_INFO%22%3A%7B%22title%22%3A%22QueryFinderChartWeb%22%2C%22tbl_id%22%3A%22results%22%7D%7D&options=%7B%22tbl_group%22%3A%22results%22%2C%22removable%22%3Afalse%2C%22showTitle%22%3Afalse%2C%22pageSize%22%3A100%7D'
-    irsaURL = irsaURLPart1 + irsaURLPart2 + irsaURLPart3
+    irsaURLPart3 = '&mode=getResult&subsetsize=4.0&searchCatalog=no&survey='
+    irsaURLPart4 = urlencode('DSS,SDSS,2MASS')
+    #irsaURLPart3 = '%3Bned%22%2C%22imageSizeAndUnit%22%3A%220.042777777777777776%22%2C%22thumbnail_size%22%3A%22256%22%2C%22selectImage%22%3A%22dss%2Csdss%2C2mass%22%2C%22searchCatalog%22%3A%22no%22%2C%22ckgDSS%22%3A%22dss1Blue%2Cdss1Red%2Cdss2Blue%2Cdss2Red%2Cdss2IR%22%2C%22ckgSDSS%22%3A%22u%2Cg%2Cr%2Cz%22%2C%22ckg2MASS%22%3A%22j%2Ch%2Ck%22%2C%22imageSearchOptions%22%3A%22closed%22%2C%22META_INFO%22%3A%7B%22title%22%3A%22QueryFinderChartWeb%22%2C%22tbl_id%22%3A%22results%22%7D%7D&options=%7B%22tbl_group%22%3A%22results%22%2C%22removable%22%3Afalse%2C%22showTitle%22%3Afalse%2C%22pageSize%22%3A100%7D'
+    irsaURL = irsaURLPart1 + irsaURLPart2 + irsaURLPart3 + irsaURLPart4
     
     # MAST Data portal
     mstURLPart1 = 'https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html?searchQuery=%7B%22service%22%3A%22CAOMDB%22%2C%22inputText%22%3A%22'
@@ -402,13 +427,42 @@ if __name__ == '__main__':
         path = os.path.abspath('twexo_temp_{0}_{1:016d}.html'.format(DATE_STR,useTIC))
         ModeHeader = 'From input coordinates Using TIC: {0}'.format(useTIC)
 
-    ticPos = 'Using TIC catalog position {0} {1} [J2000.0; epoch 2000.0]'.format(starRa, starDec)
+    ticPos = 'Using TIC catalog position {0:.6f} {1:.6f} [J2000.0; epoch 2000.0]'.format(starRa, starDec)
     twoMassId = '2MASS J{0} From TIC'.format(star2mass)
     closeTICN = '{0} TIC entries within {1} arcsec of target {2}'.format(len(ticList)-1, SEARCH_RAD, useTIC)
     neighTIC = []
     for i, curTIC in enumerate(ticList[1:]):
         neighTIC.append('{0:d} Sep [arcsec]: {1:8.3f}<br>'.format(curTIC, seps[i+1].arcsecond))     
     neighTICStr = ' '.join(neighTIC)
+
+    # Since we got our positions from the TIC (which are in epoch 2000.0)
+    # propagate the proper motion to find coordinates in 2015.5 which is gaia
+    # First sanity check pm data from TIC
+    pmOK = True
+    if (not np.isfinite(starPmTot)) or (not np.isfinite(starPmTotE)):
+        pmOK = False
+    if np.abs(starPmTot)/starPmTotE < 1.5:
+        pmOK = False
+    if pmOK:
+        ctic = SkyCoord(ra=starRa * u.deg,
+                        dec=starDec * u.deg,
+                        pm_ra_cosdec=starPmRa * u.mas/u.yr,
+                        pm_dec=starPmDec * u.mas/u.yr,
+                        obstime=Time('J2000.0'),
+                        distance=1000.0*u.pc, # Use fake distance just for skycoord functionality
+                        radial_velocity = 0.0 * u.km/u.s) # Use fake rv "
+        # convert position to GAIA DR2 2015.5
+        gaiaEpc = Time('J2015.5')
+        ctic_gaia_epoch = ctic.apply_space_motion(gaiaEpc)
+        gaiaPredRa = ctic_gaia_epoch.ra.degree
+        gaiaPredDec = ctic_gaia_epoch.dec.degree
+    else:
+        gaiaPredRa = starRa
+        gaiaPredDec = starDec
+    gaiaPos = 'Predicted GAIA position {0:.6f} {1:.6f} [J2000.0; epoch 2015.5]'.format(gaiaPredRa, gaiaPredDec)
+
+
+
 
     # We had all the HTML strings, put them in a dictionary that will
     #  will be used for replacement in HTML template below        
@@ -417,7 +471,7 @@ if __name__ == '__main__':
                 'ModeHeader':ModeHeader, 'useTIC':useTIC, \
                 'exofopURL':exofopURL, 'simbadURL':simbadURL, 'vizURL':vizURL, \
                 'mstURL':mstURL, 'irsaURL':irsaURL, 'esoURL':esoURL, \
-                'toicheckstr':toicheckstr, 'toihdr':toihdr}
+                'toicheckstr':toicheckstr, 'toihdr':toihdr, 'gaiaPos':gaiaPos}
     #HTML TEMPLATE
     template = """
 <html>
@@ -427,6 +481,7 @@ if __name__ == '__main__':
 <body>
 <h1>{ModeHeader}</h1>
 <h3>{ticPos}</h3>
+<h3>{gaiaPos}</h3>
 <h3>{twoMassId}</h3>
 <h3>{closeTICN}</h3>
 {neighTIC}
@@ -437,8 +492,7 @@ if __name__ == '__main__':
 <a href="{simbadURL}" target="_blank">Simbad</a> |
 <a href="{vizURL}" target="_blank">Vizier</a> |
 <a href="{mstURL}" target="_blank">MAST TESS Data Holdings</a> |
-#<a href="{irsaURL}" target="_blank">IRSA Finderchart</a>
-IRSA Finderchart Link Currently Broken |
+<a href="{irsaURL}" target="_blank">IRSA Finderchart</a> |
 <a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> 
 </body>
 </html>
@@ -453,7 +507,7 @@ IRSA Finderchart Link Currently Broken |
     # If the user requested a web explode load em all!
     if args.explode:
         webbrowser.open(esoURL, new=2)
-        #webbrowser.open(irsaURL, new=2)
+        webbrowser.open(irsaURL, new=2)
         webbrowser.open(mstURL, new=2)
         webbrowser.open(vizURL, new=2)
         webbrowser.open(simbadURL, new=2)
