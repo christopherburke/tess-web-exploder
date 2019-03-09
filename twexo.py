@@ -33,7 +33,7 @@ USAGE:
 AUTHORS: Christopher J. Burke (MIT)
  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-VERSION: 0.1
+VERSION: 0.2
 
 NOTES: This routine opens tabs on your browser!
     This routine saves a local file for the html!
@@ -78,6 +78,12 @@ except ImportError:  # Python 2.x
     
 import csv
 import time
+# Look for optional tess-point for predicting which TESS sectors data is avail
+foo_have_tp = True
+try:
+    from tess_stars2px import tess_stars2px_function_entry
+except:
+    foo_have_tp = False
 
 
 def idx_filter(idx, *array_list):
@@ -498,7 +504,7 @@ if __name__ == '__main__':
     # MAST Data portal
     mstURLPart1 = 'https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html?searchQuery=%7B%22service%22%3A%22CAOMDB%22%2C%22inputText%22%3A%22'
     mstURLPart2 = 'TIC%20{0:d}'.format(useTIC)
-    mstURLPart3 = '%22%2C%22paramsService%22%3A%22Mast.Caom.Cone%22%2C%22title%22%3A%22MAST%3A%20TIC%20261136679%22%2C%22columns%22%3A%22*%22%2C%22caomVersion%22%3Anull%7D'
+    mstURLPart3 = '%22%2C%22paramsService%22%3A%22Mast.Caom.Cone%22%2C%22columns%22%3A%22*%22%2C%22caomVersion%22%3Anull%7D'
     mstURL = mstURLPart1 + mstURLPart2 + mstURLPart3
 
     #Vizier search
@@ -585,7 +591,69 @@ if __name__ == '__main__':
     gaiaTeff = r['teff_val'][0]
     gaiaRad = r['radius_val'][0]
     gaiaRpMag = r['phot_rp_mean_mag'][0]
+
+    #LOOK for DV reports for this target available at MAST
+    # Setup mast query first step is to get obsid's for the target
+    dvStr = 'No DV Results for this target at MAST<br>'
+    request = {'service':'Mast.Caom.Filtered.Position', \
+       'params':{'columns':'*', \
+                 'position':'{0:f}, {1:f}, {2:f}'.format(starRa,starDec,2.0/60.0/60.0), \
+                 'filters':[
+                         {'paramName':'project',
+                         'values':['TESS']
+                         },\
+                         {'paramName':'dataproduct_type',
+                          'values':['timeseries']
+                          }]
+                }, \
+        'format':'json', 'removenullcolumns':True}
+    headers, outString = mastQuery(request)
+    outObject = json.loads(outString)
+    print(outObject['data'])
+    # Check if any objects returned
+    if len(outObject['data']) > 0:
+        # Now get list of obsids for the time series data
+        #print(len(outObject['data']))
+        obsidStr = []
+        for i, oo in enumerate(outObject['data']):
+            #print(i)
+            #print(oo)
+            #print(oo['obsid'])
+            obsidStr.append('{0:d}'.format(oo['obsid']))
+        # Have list of obs ids for this TIC
+        # Request the data products associated with this obs id
+        request = {'service':'Mast.Caom.Products', \
+           'params':{'obsid':','.join(obsidStr), \
+                     }, \
+            'format':'json', 'removenullcolumns':True}
+        headers, outString = mastQuery(request)
+        outObject = json.loads(outString)
+        #print(len(outObject['data']))
+        dvLines = []
+        for i, oo in enumerate(outObject['data']):
+            #print(i)
+            dataURI = oo['dataURI']
+            suffix = dataURI[-3:]
+            if suffix == 'pdf':
+                useURL = 'https://mast.stsci.edu/api/v0/download/file?uri=' + dataURI
+                dvLines.append('<a href="{0}" target="_blank">{0}</a><br>'.format(useURL))
+        dvStr = ' '.join(dvLines)        
+
+    else:
+        dvStr = 'No DV Results for this target at MAST<br>'
     
+    # Do an optional report that shows which sectors target is TESS observable
+    #  One needs tess-point install for this to work
+    tesspStr = '<br>'
+    if foo_have_tp:
+            outID, outEclipLong, outEclipLat, outSec, outCam, outCcd, \
+            outColPix, outRowPix, scinfo = tess_stars2px_function_entry(
+                    useTIC, gaiaPredRa, gaiaPredDec)
+            tpLines = ['<br>TESS Observe - Sec Cam Ccd  Col  Row<br>']
+            for i, curTIC in enumerate(outID):
+                tpLines.append('{0:d} {1:d} {2:d} {3:d} {4:.2f} {5:.2f}<br>'.format(outID[i], \
+                               outSec[i],outCam[i], outCcd[i], outColPix[i], outRowPix[i]))
+            tesspStr = ' '.join(tpLines)
 
 
 
@@ -602,7 +670,8 @@ if __name__ == '__main__':
                 'T_Rstar':'{0:6.2f}&plusmn{1:4.1f}'.format(starRad, starRadE), \
                 'T_Mstar':'{0:5.2f}&plusmn{1:5.2f}'.format(starMass, starMassE), \
                 'G_Rmag':'{0:6.3f}'.format(gaiaRpMag), \
-                'G_Teff':'{0:7.1f}'.format(gaiaTeff), 'G_Rstar':'{0:6.2f}'.format(gaiaRad)}
+                'G_Teff':'{0:7.1f}'.format(gaiaTeff), 'G_Rstar':'{0:6.2f}'.format(gaiaRad), \
+                'tesspStr':tesspStr, 'dvStr':dvStr}
     #HTML TEMPLATE
     template = """
 <html>
@@ -663,7 +732,11 @@ th {{
 <a href="{vizURL}" target="_blank">Vizier</a> |
 <a href="{mstURL}" target="_blank">MAST TESS Data Holdings</a> |
 <a href="{irsaURL}" target="_blank">IRSA Finderchart</a> |
-<a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> 
+<a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a>
+<h2>NASA Ames SPOC DV Results Available at MAST</h2>
+{dvStr}
+<br>
+{tesspStr}
 </body>
 </html>
 """
