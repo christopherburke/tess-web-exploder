@@ -40,15 +40,30 @@ Download twexo.py to a local directory
 ### AUTHORS
 Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
+### VERSION: 0.2
+
+### WHAT'S NEW:
+V0.2
+- Fixed Finder Chart URL to work.
+
+- Added some proper motion adjustments to position to get better GAIA match for high proper motion objects
+
+- Some basic TIC and GAIA DR2 information about target is not shown on main page
+
+- If you have tess-point installed (pip install tess-point), it will show which TESS sectors the target is observable
+   in TESS year 1.  If you don't have tess-point installed that is okay it checks and does not show this information
+   
+- If NASA Ames SPOC DV reports for this target exist links to them will be given in a list.
+
 ### TODOS:
-1. High proper motion target resolving
-2. Direct link to GAIA results. Currently can be found at bottom of Simbad page
-3. Currently this is target based, but want to point to TOI or planet candidate pages
-4. Exo.mast.stsci.edu for the TOI based linking
-5. Add as page to the TESS-ExoClass candidate reports
-6. SPOC DV reports available and links
-7. Someway (lightkurve?) to load a jupyter notebook or other on demand light curve examination product from the web.
-8. The coding is atrocious.  Need to make many of the MAST calls into functions to clean things up.
+1. Direct link to GAIA results. Currently can be found at bottom of Simbad page
+2. Currently this is target based, but want to point to TOI or planet candidate pages
+3. Exo.mast.stsci.edu for the TOI based linking
+4. Add as page to the TESS-ExoClass candidate reports
+5. Someway (lightkurve?) to load a jupyter notebook or other on demand light curve examination product from the web.
+6. Capability to set an observatory location and provide links to airmass tables and links to transit event
+      observability calculators online.
+7. The coding is atrocious.  Need to make many of the procedures into functions to clean things up.
 
 ### DEPENDENCIES:
 - python 3+
