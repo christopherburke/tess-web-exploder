@@ -56,6 +56,7 @@ import os
 import argparse
 from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimezoneInfo
+from astroquery.gaia import Gaia
 import astropy.units as u
 import sys
 import datetime
@@ -79,6 +80,11 @@ import csv
 import time
 
 
+def idx_filter(idx, *array_list):
+    new_array_list = []
+    for array in array_list:
+        new_array_list.append(array[idx])
+    return new_array_list
 
 ## [Mast Query]
 def mastQuery(request):
@@ -178,6 +184,7 @@ if __name__ == '__main__':
             'format':'json', 'removenullcolumns':True}
         headers, outString = mastQuery(request)
         outObject = json.loads(outString)
+        oo = outObject['data'][0]
         starRa = outObject['data'][0]['ra']
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
@@ -188,6 +195,38 @@ if __name__ == '__main__':
         starPmRaE = outObject['data'][0]['e_pmRA']
         starPmDecE = outObject['data'][0]['e_pmDEC']
         starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        starTeff = outObject['data'][0]['Teff']
+        if 'e_Teff' in oo:
+            starTeffE = outObject['data'][0]['e_Teff']
+        else:
+            starTeffE = 0.0
+        if 'logg' in oo:
+            starLogg = outObject['data'][0]['logg']
+        else:
+            starLogg = 0.0
+        if 'e_logg' in oo:
+            starLoggE = outObject['data'][0]['e_logg']
+        else:
+            starLoggE = 0.0
+        if 'rad' in oo:
+            starRad = outObject['data'][0]['rad']
+        else:
+            starRad = 0.0
+        if 'e_rad' in oo:
+            starRadE = outObject['data'][0]['e_rad']
+        else:
+            starRadE = 0.0
+        if 'mass' in oo:
+            starMass = outObject['data'][0]['mass']
+        else:
+            starMass = 0.0
+        if 'e_mass' in oo:
+            starMassE = outObject['data'][0]['e_mass']
+        else:
+            starMassE = 0.0
+        starTmag = outObject['data'][0]['Tmag']
+        
+        #print(outObject['data'][0])
         
         
     # TOI specified get toi -> tic mapping from table at exofop
@@ -226,6 +265,7 @@ if __name__ == '__main__':
             'format':'json', 'removenullcolumns':True}
         headers, outString = mastQuery(request)
         outObject = json.loads(outString)
+        oo = outObject['data'][0]
         starRa = outObject['data'][0]['ra']
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
@@ -236,6 +276,36 @@ if __name__ == '__main__':
         starPmRaE = outObject['data'][0]['e_pmRA']
         starPmDecE = outObject['data'][0]['e_pmDEC']
         starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        starTeff = outObject['data'][0]['Teff']
+        if 'e_Teff' in oo:
+            starTeffE = outObject['data'][0]['e_Teff']
+        else:
+            starTeffE = 0.0
+        if 'logg' in oo:
+            starLogg = outObject['data'][0]['logg']
+        else:
+            starLogg = 0.0
+        if 'e_logg' in oo:
+            starLoggE = outObject['data'][0]['e_logg']
+        else:
+            starLoggE = 0.0
+        if 'rad' in oo:
+            starRad = outObject['data'][0]['rad']
+        else:
+            starRad = 0.0
+        if 'e_rad' in oo:
+            starRadE = outObject['data'][0]['e_rad']
+        else:
+            starRadE = 0.0
+        if 'mass' in oo:
+            starMass = outObject['data'][0]['mass']
+        else:
+            starMass = 0.0
+        if 'e_mass' in oo:
+            starMassE = outObject['data'][0]['e_mass']
+        else:
+            starMassE = 0.0
+        starTmag = outObject['data'][0]['Tmag']
 
         
         #print('TOI: {0} is associated with TIC: {1} at ExoFop'.format(args.toi, useTIC))
@@ -288,6 +358,15 @@ if __name__ == '__main__':
         ticList = np.array([x['ID'] for x in outObject['data']], dtype=np.int32)
         ticRas = np.array([x['ra'] for x in outObject['data']], dtype=np.float)
         ticDecs = np.array([x['dec'] for x in outObject['data']], dtype=np.float)
+        ticTeffs = np.array([x['Teff'] for x in outObject['data']], dtype=np.float)
+        ticTeffEs = np.array([x['e_Teff'] for x in outObject['data']], dtype=np.float)
+        ticLoggs = np.array([x['logg'] for x in outObject['data']], dtype=np.float)
+        ticLoggEs = np.array([x['e_logg'] for x in outObject['data']], dtype=np.float)
+        ticRads = np.array([x['rad'] for x in outObject['data']], dtype=np.float)
+        ticRadEs = np.array([x['e_rad'] for x in outObject['data']], dtype=np.float)
+        ticMasss = np.array([x['mass'] for x in outObject['data']], dtype=np.float)
+        ticMassEs = np.array([x['e_mass'] for x in outObject['data']], dtype=np.float)
+        ticTmags = np.array([x['Tmag'] for x in outObject['data']], dtype=np.float)
 
     except:
         # Cone search failed
@@ -303,10 +382,10 @@ if __name__ == '__main__':
     ticCoords = SkyCoord(ticRas, ticDecs, unit='deg')
     seps = targCoord.separation(ticCoords)
     ia = np.argsort(seps)
-    ticList = ticList[ia]
-    ticRas = ticRas[ia]
-    ticDecs = ticDecs[ia]
-    seps = seps[ia]
+    ticList, ticRas, ticDes, seps, ticTeffs, ticTeffEs, ticLoggs, ticLoggEs, \
+        ticRads, ticRadEs, ticMasss, ticMassEs, ticTmags = idx_filter(ia , \
+         ticList, ticRas, ticDecs, seps, ticTeffs, ticTeffEs, ticLoggs, ticLoggEs, \
+        ticRads, ticRadEs, ticMasss, ticMassEs, ticTmags)
 
     # If we hadn't defined which target is useTIC yet do it now
     if useTIC == 0:
@@ -320,6 +399,8 @@ if __name__ == '__main__':
             'format':'json', 'removenullcolumns':True}
         headers, outString = mastQuery(request)
         outObject = json.loads(outString)
+        #print(outObject['data'][0])
+        oo = outObject['data'][0]
         starRa = outObject['data'][0]['ra']
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
@@ -330,6 +411,36 @@ if __name__ == '__main__':
         starPmRaE = outObject['data'][0]['e_pmRA']
         starPmDecE = outObject['data'][0]['e_pmDEC']
         starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        starTeff = outObject['data'][0]['Teff']
+        if 'e_Teff' in oo:
+            starTeffE = outObject['data'][0]['e_Teff']
+        else:
+            starTeffE = 0.0
+        if 'logg' in oo:
+            starLogg = outObject['data'][0]['logg']
+        else:
+            starLogg = 0.0
+        if 'e_logg' in oo:
+            starLoggE = outObject['data'][0]['e_logg']
+        else:
+            starLoggE = 0.0
+        if 'rad' in oo:
+            starRad = outObject['data'][0]['rad']
+        else:
+            starRad = 0.0
+        if 'e_rad' in oo:
+            starRadE = outObject['data'][0]['e_rad']
+        else:
+            starRadE = 0.0
+        if 'mass' in oo:
+            starMass = outObject['data'][0]['mass']
+        else:
+            starMass = 0.0
+        if 'e_mass' in oo:
+            starMassE = outObject['data'][0]['e_mass']
+        else:
+            starMassE = 0.0
+        starTmag = outObject['data'][0]['Tmag']
 
     # If we weren't given TOI number check exofop to see if it has TOIs
     if args.toi is None:
@@ -461,6 +572,20 @@ if __name__ == '__main__':
         gaiaPredDec = starDec
     gaiaPos = 'Predicted GAIA position {0:.6f} {1:.6f} [J2000.0; epoch 2015.5]'.format(gaiaPredRa, gaiaPredDec)
 
+    # We are go for GAIA Cone search
+    ADSQL_Str = "SELECT \
+       phot_g_mean_mag, phot_rp_mean_mag, teff_val, teff_percentile_lower, \
+       teff_percentile_upper, radius_val, radius_percentile_lower,\
+       radius_percentile_upper, ra, dec, DISTANCE( POINT('ICRS', ra, dec),\
+       POINT('ICRS', {0}, {1}) ) AS dist, solution_id,ref_epoch \
+        from gaiadr2.gaia_source WHERE 1 = CONTAINS( POINT('ICRS', ra, dec), \
+        CIRCLE('ICRS', {0}, {1}, 0.016666666666666666)) order by dist".format(gaiaPredRa, gaiaPredDec)
+    job = Gaia.launch_job(ADSQL_Str)
+    r = job.get_results()
+    gaiaTeff = r['teff_val'][0]
+    gaiaRad = r['radius_val'][0]
+    gaiaRpMag = r['phot_rp_mean_mag'][0]
+    
 
 
 
@@ -471,12 +596,30 @@ if __name__ == '__main__':
                 'ModeHeader':ModeHeader, 'useTIC':useTIC, \
                 'exofopURL':exofopURL, 'simbadURL':simbadURL, 'vizURL':vizURL, \
                 'mstURL':mstURL, 'irsaURL':irsaURL, 'esoURL':esoURL, \
-                'toicheckstr':toicheckstr, 'toihdr':toihdr, 'gaiaPos':gaiaPos}
+                'toicheckstr':toicheckstr, 'toihdr':toihdr, 'gaiaPos':gaiaPos,\
+                'T_Tmag':starTmag, 'T_Teff':'{0:7.1f}&plusmn{1:5.1f}'.format(starTeff,starTeffE), \
+                'T_Logg':'{0:4.2f}&plusmn{1:4.2f}'.format(starLogg, starLoggE), \
+                'T_Rstar':'{0:6.2f}&plusmn{1:4.1f}'.format(starRad, starRadE), \
+                'T_Mstar':'{0:5.2f}&plusmn{1:5.2f}'.format(starMass, starMassE), \
+                'G_Rmag':'{0:6.3f}'.format(gaiaRpMag), \
+                'G_Teff':'{0:7.1f}'.format(gaiaTeff), 'G_Rstar':'{0:6.2f}'.format(gaiaRad)}
     #HTML TEMPLATE
     template = """
 <html>
 <head>
 <title>TESS Web Exploder {useTIC}</title>
+<style>
+table, th, td {{
+  border: 1px solid black;
+  border-collapse: collapse;
+}}
+th, td {{
+  padding: 5px;
+}}
+th {{
+  text-align: left;
+}}
+</style>
 </head>
 <body>
 <h1>{ModeHeader}</h1>
@@ -487,6 +630,33 @@ if __name__ == '__main__':
 {neighTIC}
 <h3>{toihdr}</h3>
 {toicheckstr}
+<h3>Target Parameters</h3>
+<table style="width:100%">
+  <tr>
+    <th>Catalog</th>
+    <th>Tmag/Rpmag</th> 
+    <th>Teff</th>
+    <th>Logg</th>
+    <th>Rstar</th>
+    <th>Mstar</th>
+  </tr>
+  <tr>
+    <td>TIC</td>
+    <td>{T_Tmag}</td> 
+    <td>{T_Teff}</td>
+    <td>{T_Logg}</td>
+    <td>{T_Rstar}</td>
+    <td>{T_Mstar}</td>
+  </tr>
+  <tr>
+    <td>GAIA DR2</td>
+    <td>{G_Rmag}</td> 
+    <td>{G_Teff}</td>
+    <td>...</td>
+    <td>{G_Rstar}</td>
+    <td>...</td>
+  </tr>
+</table>
 <h2>Target Links</h2>
 <a href="{exofopURL}" target="_blank">ExoFOP</a> |
 <a href="{simbadURL}" target="_blank">Simbad</a> |
