@@ -40,9 +40,12 @@ Download twexo.py to a local directory
 ### AUTHORS
 Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-### VERSION: 0.2
+### VERSION: 0.2.1
 
 ### WHAT'S NEW:
+V0.2.1
+- Added timeout check during the DV report search at MAST to not lead to error
+
 V0.2
 - Fixed Finder Chart URL to work.
 

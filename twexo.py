@@ -33,7 +33,7 @@ USAGE:
 AUTHORS: Christopher J. Burke (MIT)
  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-VERSION: 0.2
+VERSION: 0.2.1
 
 NOTES: This routine opens tabs on your browser!
     This routine saves a local file for the html!
@@ -594,6 +594,7 @@ if __name__ == '__main__':
 
     #LOOK for DV reports for this target available at MAST
     # Setup mast query first step is to get obsid's for the target
+    print('Query MAST for DV reports')
     dvStr = 'No DV Results for this target at MAST<br>'
     request = {'service':'Mast.Caom.Filtered.Position', \
        'params':{'columns':'*', \
@@ -609,38 +610,43 @@ if __name__ == '__main__':
         'format':'json', 'removenullcolumns':True}
     headers, outString = mastQuery(request)
     outObject = json.loads(outString)
-    print(outObject['data'])
-    # Check if any objects returned
-    if len(outObject['data']) > 0:
-        # Now get list of obsids for the time series data
-        #print(len(outObject['data']))
-        obsidStr = []
-        for i, oo in enumerate(outObject['data']):
-            #print(i)
-            #print(oo)
-            #print(oo['obsid'])
-            obsidStr.append('{0:d}'.format(oo['obsid']))
-        # Have list of obs ids for this TIC
-        # Request the data products associated with this obs id
-        request = {'service':'Mast.Caom.Products', \
-           'params':{'obsid':','.join(obsidStr), \
-                     }, \
-            'format':'json', 'removenullcolumns':True}
-        headers, outString = mastQuery(request)
-        outObject = json.loads(outString)
-        #print(len(outObject['data']))
-        dvLines = []
-        for i, oo in enumerate(outObject['data']):
-            #print(i)
-            dataURI = oo['dataURI']
-            suffix = dataURI[-3:]
-            if suffix == 'pdf':
-                useURL = 'https://mast.stsci.edu/api/v0/download/file?uri=' + dataURI
-                dvLines.append('<a href="{0}" target="_blank">{0}</a><br>'.format(useURL))
-        dvStr = ' '.join(dvLines)        
-
+    if not outObject['status'] == 'EXECUTING':
+    #    print(outObject)
+    #    print(outObject['data'])
+        # Check if any objects returned
+        if len(outObject['data']) > 0:
+            # Now get list of obsids for the time series data
+            #print(len(outObject['data']))
+            obsidStr = []
+            for i, oo in enumerate(outObject['data']):
+                #print(i)
+                #print(oo)
+                #print(oo['obsid'])
+                obsidStr.append('{0:d}'.format(oo['obsid']))
+            # Have list of obs ids for this TIC
+            # Request the data products associated with this obs id
+            request = {'service':'Mast.Caom.Products', \
+               'params':{'obsid':','.join(obsidStr), \
+                         }, \
+                'format':'json', 'removenullcolumns':True}
+            headers, outString = mastQuery(request)
+            outObject = json.loads(outString)
+            #print(len(outObject['data']))
+            dvLines = []
+            for i, oo in enumerate(outObject['data']):
+                #print(i)
+                dataURI = oo['dataURI']
+                suffix = dataURI[-3:]
+                if suffix == 'pdf':
+                    useURL = 'https://mast.stsci.edu/api/v0/download/file?uri=' + dataURI
+                    dvLines.append('<a href="{0}" target="_blank">{0}</a><br>'.format(useURL))
+            dvStr = ' '.join(dvLines)        
+    
+        else:
+            dvStr = 'No DV Results for this target at MAST<br>'
     else:
-        dvStr = 'No DV Results for this target at MAST<br>'
+        print('Timeout on the DV report search at MAST')
+        dvStr = '***DV report search at MAST timed out.  Try Later***<br>'
     
     # Do an optional report that shows which sectors target is TESS observable
     #  One needs tess-point install for this to work
