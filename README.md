@@ -40,9 +40,12 @@ Download twexo.py to a local directory
 ### AUTHORS
 Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-### VERSION: 0.2.1
+### VERSION: 0.3
 
 ### WHAT'S NEW:
+V0.3
+- Extra GAIA information display; TESSCut target pixel file download link; treated some bugs and value checking that cropped due to missing catalog values
+
 V0.2.1
 - Added timeout check during the DV report search at MAST to not lead to error
 

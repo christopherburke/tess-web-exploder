@@ -33,7 +33,7 @@ USAGE:
 AUTHORS: Christopher J. Burke (MIT)
  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-VERSION: 0.2.1
+VERSION: 0.3
 
 NOTES: This routine opens tabs on your browser!
     This routine saves a local file for the html!
@@ -195,12 +195,23 @@ if __name__ == '__main__':
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
         stargaia = outObject['data'][0]['GAIA']
-        starPmRa = outObject['data'][0]['pmRA']
-        starPmDec = outObject['data'][0]['pmDEC']
+        if 'pmRA' in oo:
+            starPmRa = outObject['data'][0]['pmRA']
+        else:
+            starPmRa = 0.0
+        if 'pmDEC' in oo:
+            starPmDec = outObject['data'][0]['pmDEC']
+        else:
+            starPmDec = 0.0
         starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
-        starPmRaE = outObject['data'][0]['e_pmRA']
-        starPmDecE = outObject['data'][0]['e_pmDEC']
-        starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        if 'e_pmRA' in oo:
+            starPmRaE = outObject['data'][0]['e_pmRA']
+            starPmDecE = outObject['data'][0]['e_pmDEC']
+            starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        else:
+            starPmRaE = 100.0
+            starPmDecE = 100.0
+            starPmTotE = 1000.0
         starTeff = outObject['data'][0]['Teff']
         if 'e_Teff' in oo:
             starTeffE = outObject['data'][0]['e_Teff']
@@ -276,12 +287,23 @@ if __name__ == '__main__':
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
         stargaia = outObject['data'][0]['GAIA']
-        starPmRa = outObject['data'][0]['pmRA']
-        starPmDec = outObject['data'][0]['pmDEC']
+        if 'pmRA' in oo:
+            starPmRa = outObject['data'][0]['pmRA']
+        else:
+            starPmRa = 0.0
+        if 'pmDEC' in oo:
+            starPmDec = outObject['data'][0]['pmDEC']
+        else:
+            starPmDec = 0.0
         starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
-        starPmRaE = outObject['data'][0]['e_pmRA']
-        starPmDecE = outObject['data'][0]['e_pmDEC']
-        starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        if 'e_pmRA' in oo:
+            starPmRaE = outObject['data'][0]['e_pmRA']
+            starPmDecE = outObject['data'][0]['e_pmDEC']
+            starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        else:
+            starPmRaE = 100.0
+            starPmDecE = 100.0
+            starPmTotE = 1000.0
         starTeff = outObject['data'][0]['Teff']
         if 'e_Teff' in oo:
             starTeffE = outObject['data'][0]['e_Teff']
@@ -411,12 +433,23 @@ if __name__ == '__main__':
         starDec = outObject['data'][0]['dec']
         star2mass = outObject['data'][0]['TWOMASS']
         stargaia = outObject['data'][0]['GAIA']
-        starPmRa = outObject['data'][0]['pmRA']
-        starPmDec = outObject['data'][0]['pmDEC']
+        if 'pmRA' in oo:
+            starPmRa = outObject['data'][0]['pmRA']
+        else:
+            starPmRa = 0.0
+        if 'pmDEC' in oo:
+            starPmDec = outObject['data'][0]['pmDEC']
+        else:
+            starPmDec = 0.0
         starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
-        starPmRaE = outObject['data'][0]['e_pmRA']
-        starPmDecE = outObject['data'][0]['e_pmDEC']
-        starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        if 'e_pmRA' in oo:
+            starPmRaE = outObject['data'][0]['e_pmRA']
+            starPmDecE = outObject['data'][0]['e_pmDEC']
+            starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+        else:
+            starPmRaE = 100.0
+            starPmDecE = 100.0
+            starPmTotE = 1000.0
         starTeff = outObject['data'][0]['Teff']
         if 'e_Teff' in oo:
             starTeffE = outObject['data'][0]['e_Teff']
@@ -484,9 +517,17 @@ if __name__ == '__main__':
         toicheckstr = ''
         
     # FORM THE URLS
+
+    # TESScut Target pixel file
+    tcutURLPart1 = 'https://mast.stsci.edu/tesscut/api/v0.1/astrocut?'
+    tcutURLPart2 = 'ra={0}&dec={1}'.format(starRa, starDec)
+    tcutURLPart3 = '&y=15&x=15&units=px&sector=All'
+    tcutURL = tcutURLPart1 + tcutURLPart2 + tcutURLPart3
+
         
     # ESO archive
-    esoURLPart1 = 'https://archive.eso.org/scienceportal/home?data_release_date=*:2019-03-06&'
+    DATE_STR = datetime.date.today().strftime('%Y-%m-%d')
+    esoURLPart1 = 'https://archive.eso.org/scienceportal/home?data_release_date=*:{0}&'.format(DATE_STR)
     esoURLPart2 = 'pos={0},{1}'.format(starRa,starDec)
     esoURLPart3 = '&r=0.008333&sort=dist,-fov,-obs_date&s=P%2fDSS2%2fcolor&f=0.064387&fc=84.485552,-80.451816&cs=J2000&av=true&ac=false&c=8,9,10,11,12,13,14,15,16,17,18&mt=true&dts=true'
     esoURL = esoURLPart1 + esoURLPart2 + esoURLPart3
@@ -548,8 +589,22 @@ if __name__ == '__main__':
     twoMassId = '2MASS J{0} From TIC'.format(star2mass)
     closeTICN = '{0} TIC entries within {1} arcsec of target {2}'.format(len(ticList)-1, SEARCH_RAD, useTIC)
     neighTIC = []
-    for i, curTIC in enumerate(ticList[1:]):
-        neighTIC.append('{0:d} Sep [arcsec]: {1:8.3f}<br>'.format(curTIC, seps[i+1].arcsecond))     
+    for i, curTIC in enumerate(ticList[1:21]):
+        if np.isfinite(ticTeffs[i+1]):
+            curTeff = ticTeffs[i+1]
+        else:
+            curTeff = 0.0
+        if np.isfinite(ticLoggs[i+1]):
+            curLogg = ticLoggs[i+1]
+        else:
+            curLogg = 0.0
+        if np.isfinite(ticRads[i+1]):
+            curRad = ticRads[i+1]
+        else:
+            curRad = 0.0
+        neighTIC.append('{0:d} Sep [arcsec]: {1:8.3f} Tmag: {2:5.2f} Teff: {3:6.1f} Logg: {4:5.2f} Rs[Rsun]: {5:6.2f}<br>'.format(\
+                        curTIC, seps[i+1].arcsecond, ticTmags[i+1], curTeff, \
+                        curLogg, curRad))     
     neighTICStr = ' '.join(neighTIC)
 
     # Since we got our positions from the TIC (which are in epoch 2000.0)
@@ -561,6 +616,7 @@ if __name__ == '__main__':
     if np.abs(starPmTot)/starPmTotE < 1.5:
         pmOK = False
     if pmOK:
+        print('TIC has proper motion data.  Getting 2015.5 position for GAIA')
         ctic = SkyCoord(ra=starRa * u.deg,
                         dec=starDec * u.deg,
                         pm_ra_cosdec=starPmRa * u.mas/u.yr,
@@ -582,6 +638,8 @@ if __name__ == '__main__':
     ADSQL_Str = "SELECT \
        phot_g_mean_mag, phot_rp_mean_mag, teff_val, teff_percentile_lower, \
        teff_percentile_upper, radius_val, radius_percentile_lower,\
+       astrometric_gof_al, astrometric_excess_noise_sig, phot_bp_mean_mag, \
+       a_g_val, e_bp_min_rp_val, parallax, \
        radius_percentile_upper, ra, dec, DISTANCE( POINT('ICRS', ra, dec),\
        POINT('ICRS', {0}, {1}) ) AS dist, solution_id,ref_epoch \
         from gaiadr2.gaia_source WHERE 1 = CONTAINS( POINT('ICRS', ra, dec), \
@@ -589,8 +647,30 @@ if __name__ == '__main__':
     job = Gaia.launch_job(ADSQL_Str)
     r = job.get_results()
     gaiaTeff = r['teff_val'][0]
+    gaiaTeffE = ((r['teff_percentile_upper'][0] - gaiaTeff) + (gaiaTeff - r['teff_percentile_lower'][0]))/2.0
     gaiaRad = r['radius_val'][0]
+    gaiaRadE = ((r['radius_percentile_upper'][0] - gaiaRad) + (gaiaRad - r['radius_percentile_lower'][0]))/2.0
     gaiaRpMag = r['phot_rp_mean_mag'][0]
+    gaiaGMag = r['phot_g_mean_mag'][0]
+    gaiaBpMag = r['phot_bp_mean_mag'][0]
+    gaiapar = r['parallax'][0]
+    gaiaag = float(r['a_g_val'][0])
+    if not np.isfinite(gaiaag):
+        gaiaag = 0.0        
+    gaiaexclr = float(r['e_bp_min_rp_val'][0])
+    if not np.isfinite(gaiaexclr):
+        gaiaexclr = 0.0
+    gaiaastrogof = r['astrometric_gof_al'][0]
+    gaiaastrexsig = r['astrometric_excess_noise_sig'][0]
+    #print(gaiaGMag, gaiapar, gaiaag, gaiaBpMag, gaiaRpMag, gaiaexclr)
+    gaiaAbsGMag = gaiaGMag + 5.0 + 5.0*np.log10(gaiapar/1000.0)-gaiaag
+    gaiaClro = gaiaBpMag - gaiaRpMag - gaiaexclr
+
+    gaiaExStr = 'Other GAIA G: {0:5.2f} Bp: {1:5.2f} AbsG: {2:5.2f} (Bp-Rp)o: {3:5.3f} AstroGOF: {4:6.2f} AstroExNoiSig: {5:6.2f}<br>'.format(
+            gaiaGMag, gaiaBpMag, gaiaAbsGMag, gaiaClro, gaiaastrogof, gaiaastrexsig)
+#    print(r['teff_percentile_upper'])
+#    print(r['teff_percentile_lower'])
+    #print(r)
 
     #LOOK for DV reports for this target available at MAST
     # Setup mast query first step is to get obsid's for the target
@@ -676,8 +756,10 @@ if __name__ == '__main__':
                 'T_Rstar':'{0:6.2f}&plusmn{1:4.1f}'.format(starRad, starRadE), \
                 'T_Mstar':'{0:5.2f}&plusmn{1:5.2f}'.format(starMass, starMassE), \
                 'G_Rmag':'{0:6.3f}'.format(gaiaRpMag), \
-                'G_Teff':'{0:7.1f}'.format(gaiaTeff), 'G_Rstar':'{0:6.2f}'.format(gaiaRad), \
-                'tesspStr':tesspStr, 'dvStr':dvStr}
+                'G_Teff':'{0:7.1f}&plusmn{1:5.1f}'.format(gaiaTeff, gaiaTeffE),\
+                'G_Rstar':'{0:6.2f}&plusmn{1:4.1f}'.format(gaiaRad, gaiaRadE), \
+                'tesspStr':tesspStr, 'dvStr':dvStr, 'gaiaExStr':gaiaExStr, \
+                'tcutURL':tcutURL}
     #HTML TEMPLATE
     template = """
 <html>
@@ -732,13 +814,15 @@ th {{
     <td>...</td>
   </tr>
 </table>
+{gaiaExStr}
 <h2>Target Links</h2>
 <a href="{exofopURL}" target="_blank">ExoFOP</a> |
 <a href="{simbadURL}" target="_blank">Simbad</a> |
 <a href="{vizURL}" target="_blank">Vizier</a> |
 <a href="{mstURL}" target="_blank">MAST TESS Data Holdings</a> |
 <a href="{irsaURL}" target="_blank">IRSA Finderchart</a> |
-<a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a>
+<a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> |
+<a href="{tcutURL}" target="_blank">TESScut TPF Download</a>
 <h2>NASA Ames SPOC DV Results Available at MAST</h2>
 {dvStr}
 <br>
