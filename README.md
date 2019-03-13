@@ -38,11 +38,14 @@ Download twexo.py to a local directory
 `python twexo.py -c 84.291198 -80.469143`
 
 ### AUTHORS
-Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
+Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI), Jennifer Burt (MIT), Rolan Vanderspek (MIT), Eric Jensen (Swarthmore), and Karen Collins (CfA)
 
-### VERSION: 0.3
+### VERSION: 0.4
 
 ### WHAT'S NEW:
+V0.4
+- GAIA cone search link via MAST added. URL formatting changes in order to support wkhtmltopdf conversion to pdf saving.
+
 V0.3
 - Extra GAIA information display; TESSCut target pixel file download link; treated some bugs and value checking that cropped due to missing catalog values
 
@@ -62,7 +65,7 @@ V0.2
 - If NASA Ames SPOC DV reports for this target exist links to them will be given in a list.
 
 ### TODOS:
-1. Direct link to GAIA results. Currently can be found at bottom of Simbad page
+1. Explode mode doesn't work for MAST links (click on link works)
 2. Currently this is target based, but want to point to TOI or planet candidate pages
 3. Exo.mast.stsci.edu for the TOI based linking
 4. Add as page to the TESS-ExoClass candidate reports
@@ -73,11 +76,17 @@ V0.2
 
 ### DEPENDENCIES:
 - python 3+
-- astropy
+- astropy 3+
 - numpy
+- astroquery 0.3.9+
+
+### PLATFORM NOTES:
+- Mac - Development and testing is primarily done on Mac.  No issues.
+- Windows - Under Anaconda w/ python 3.6 appears to work
+- Linux - First time use it crashed chrome browser. However, it appears stable with no browser crashing with subsequent usage.
 
 ### SPECIAL THANKS TO:
 Includes code from the python MAST query examples 
-https://mast.stsci.edu/api/v0/pyex.html
+https://mast.stsci.edu/api/v0/pyex.html , 
 Brett Morris (UW) for name resolving help from the tess-point project
 

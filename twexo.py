@@ -33,7 +33,7 @@ USAGE:
 AUTHORS: Christopher J. Burke (MIT)
  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-VERSION: 0.3
+VERSION: 0.4
 
 NOTES: This routine opens tabs on your browser!
     This routine saves a local file for the html!
@@ -41,6 +41,7 @@ NOTES: This routine opens tabs on your browser!
 DEPENDENCIES:
     python 3+
     astropy
+    astroquery
     numpy
     
 SPECIAL THANKS TO:
@@ -137,8 +138,6 @@ def safe_char(input):
     return input
 
 
-
-    
 if __name__ == '__main__':
     # Parse the command line arguments
     parser = argparse.ArgumentParser()
@@ -152,6 +151,8 @@ if __name__ == '__main__':
                         help="TOI number of target")
     parser.add_argument("-E", "--explode", action='store_true', \
                         help="Pre-load all URLs into tabs of browser rather than just the link page")
+    parser.add_argument("-nw", "--noweb", action='store_true', \
+                        help="Do not open in web.  Only generate html that plays well with wkhtmltopdf conversion tool")
                         
     args = parser.parse_args()
 
@@ -190,61 +191,64 @@ if __name__ == '__main__':
             'format':'json', 'removenullcolumns':True}
         headers, outString = mastQuery(request)
         outObject = json.loads(outString)
-        oo = outObject['data'][0]
-        starRa = outObject['data'][0]['ra']
-        starDec = outObject['data'][0]['dec']
-        star2mass = outObject['data'][0]['TWOMASS']
-        stargaia = outObject['data'][0]['GAIA']
-        if 'pmRA' in oo:
-            starPmRa = outObject['data'][0]['pmRA']
+        if len(outObject['data']) > 0:
+            oo = outObject['data'][0]
+            starRa = outObject['data'][0]['ra']
+            starDec = outObject['data'][0]['dec']
+            star2mass = outObject['data'][0]['TWOMASS']
+            stargaia = outObject['data'][0]['GAIA']
+            if 'pmRA' in oo:
+                starPmRa = outObject['data'][0]['pmRA']
+            else:
+                starPmRa = 0.0
+            if 'pmDEC' in oo:
+                starPmDec = outObject['data'][0]['pmDEC']
+            else:
+                starPmDec = 0.0
+            starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
+            if 'e_pmRA' in oo:
+                starPmRaE = outObject['data'][0]['e_pmRA']
+                starPmDecE = outObject['data'][0]['e_pmDEC']
+                starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
+            else:
+                starPmRaE = 100.0
+                starPmDecE = 100.0
+                starPmTotE = 1000.0
+            starTeff = outObject['data'][0]['Teff']
+            if 'e_Teff' in oo:
+                starTeffE = outObject['data'][0]['e_Teff']
+            else:
+                starTeffE = 0.0
+            if 'logg' in oo:
+                starLogg = outObject['data'][0]['logg']
+            else:
+                starLogg = 0.0
+            if 'e_logg' in oo:
+                starLoggE = outObject['data'][0]['e_logg']
+            else:
+                starLoggE = 0.0
+            if 'rad' in oo:
+                starRad = outObject['data'][0]['rad']
+            else:
+                starRad = 0.0
+            if 'e_rad' in oo:
+                starRadE = outObject['data'][0]['e_rad']
+            else:
+                starRadE = 0.0
+            if 'mass' in oo:
+                starMass = outObject['data'][0]['mass']
+            else:
+                starMass = 0.0
+            if 'e_mass' in oo:
+                starMassE = outObject['data'][0]['e_mass']
+            else:
+                starMassE = 0.0
+            starTmag = outObject['data'][0]['Tmag']
+            
+            #print(outObject['data'][0])
         else:
-            starPmRa = 0.0
-        if 'pmDEC' in oo:
-            starPmDec = outObject['data'][0]['pmDEC']
-        else:
-            starPmDec = 0.0
-        starPmTot = np.sqrt(starPmRa*starPmRa + starPmDec*starPmDec)
-        if 'e_pmRA' in oo:
-            starPmRaE = outObject['data'][0]['e_pmRA']
-            starPmDecE = outObject['data'][0]['e_pmDEC']
-            starPmTotE = np.sqrt(starPmRaE*starPmRaE + starPmDecE*starPmDecE)
-        else:
-            starPmRaE = 100.0
-            starPmDecE = 100.0
-            starPmTotE = 1000.0
-        starTeff = outObject['data'][0]['Teff']
-        if 'e_Teff' in oo:
-            starTeffE = outObject['data'][0]['e_Teff']
-        else:
-            starTeffE = 0.0
-        if 'logg' in oo:
-            starLogg = outObject['data'][0]['logg']
-        else:
-            starLogg = 0.0
-        if 'e_logg' in oo:
-            starLoggE = outObject['data'][0]['e_logg']
-        else:
-            starLoggE = 0.0
-        if 'rad' in oo:
-            starRad = outObject['data'][0]['rad']
-        else:
-            starRad = 0.0
-        if 'e_rad' in oo:
-            starRadE = outObject['data'][0]['e_rad']
-        else:
-            starRadE = 0.0
-        if 'mass' in oo:
-            starMass = outObject['data'][0]['mass']
-        else:
-            starMass = 0.0
-        if 'e_mass' in oo:
-            starMassE = outObject['data'][0]['e_mass']
-        else:
-            starMassE = 0.0
-        starTmag = outObject['data'][0]['Tmag']
-        
-        #print(outObject['data'][0])
-        
+            print('MAST search of TIC: {0} did not return an entry'.format(args.ticId))
+            sys.exit(1)
         
     # TOI specified get toi -> tic mapping from table at exofop
     if args.toi is not None:
@@ -517,6 +521,11 @@ if __name__ == '__main__':
         toicheckstr = ''
         
     # FORM THE URLS
+    gaiaURLPart1 = 'https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html?searchQuery={"service":"GAIADR2","inputText":"'
+    gaiaURLPart2 = '{0:f} {1:f} r{2:f}",'.format(starRa,starDec,1.0/60.0)
+    gaiaURLPart3 = '"paramsService":"Mast.Catalogs.GaiaDR2.Cone","title":"Gaia (DR2)","columns":"*"}'
+    gaiaURL = gaiaURLPart1 + gaiaURLPart2 + gaiaURLPart3
+
 
     # TESScut Target pixel file
     tcutURLPart1 = 'https://mast.stsci.edu/tesscut/api/v0.1/astrocut?'
@@ -529,7 +538,9 @@ if __name__ == '__main__':
     DATE_STR = datetime.date.today().strftime('%Y-%m-%d')
     esoURLPart1 = 'https://archive.eso.org/scienceportal/home?data_release_date=*:{0}&'.format(DATE_STR)
     esoURLPart2 = 'pos={0},{1}'.format(starRa,starDec)
-    esoURLPart3 = '&r=0.008333&sort=dist,-fov,-obs_date&s=P%2fDSS2%2fcolor&f=0.064387&fc=84.485552,-80.451816&cs=J2000&av=true&ac=false&c=8,9,10,11,12,13,14,15,16,17,18&mt=true&dts=true'
+#    esoURLPart3 = '&r=0.008333&sort=dist,-fov,-obs_date&s=P%2fDSS2%2fcolor&f=0.064387&fc=84.485552,-80.451816&cs=J2000&av=true&ac=false&c=8,9,10,11,12,13,14,15,16,17,18&mt=true&dts=true'
+    esoURLPart3 = '&r=0.008333&sort=dist,-fov,-obs_date&s=P%2fDSS2%2fcolor&f=0.064387&cs=J2000&av=true&ac=false&c=8,9,10,11,12,13,14,15,16,17,18&mt=true&dts=true'
+
     esoURL = esoURLPart1 + esoURLPart2 + esoURLPart3
 
         
@@ -537,23 +548,31 @@ if __name__ == '__main__':
     irsaURLPart1 = 'https://irsa.ipac.caltech.edu/applications/finderchart/servlet/api?locstr='
     #irsaURLPart1 = 'https://irsa.ipac.caltech.edu/applications/finderchart/?__action=table.search&request=%7B%22startIdx%22%3A0%2C%22pageSize%22%3A100%2C%22id%22%3A%22QueryFinderChartWeb%22%2C%22tbl_id%22%3A%22results%22%2C%22UserTargetWorldPt%22%3A%22126.61572%3B10.08046%3BEQ_J2000%3B'
     irsaURLPart2 = urlencode('2MASS J{0}'.format(star2mass))
+#    irsaURLPart2 = '2MASS J{0}'.format(star2mass)
     irsaURLPart3 = '&mode=getResult&subsetsize=4.0&searchCatalog=no&survey='
-    irsaURLPart4 = urlencode('DSS,SDSS,2MASS')
+    irsaURLPart4 = 'DSS,SDSS,2MASS'
+#    irsaURLPart4 = urlencode('DSS,SDSS,2MASS')
     #irsaURLPart3 = '%3Bned%22%2C%22imageSizeAndUnit%22%3A%220.042777777777777776%22%2C%22thumbnail_size%22%3A%22256%22%2C%22selectImage%22%3A%22dss%2Csdss%2C2mass%22%2C%22searchCatalog%22%3A%22no%22%2C%22ckgDSS%22%3A%22dss1Blue%2Cdss1Red%2Cdss2Blue%2Cdss2Red%2Cdss2IR%22%2C%22ckgSDSS%22%3A%22u%2Cg%2Cr%2Cz%22%2C%22ckg2MASS%22%3A%22j%2Ch%2Ck%22%2C%22imageSearchOptions%22%3A%22closed%22%2C%22META_INFO%22%3A%7B%22title%22%3A%22QueryFinderChartWeb%22%2C%22tbl_id%22%3A%22results%22%7D%7D&options=%7B%22tbl_group%22%3A%22results%22%2C%22removable%22%3Afalse%2C%22showTitle%22%3Afalse%2C%22pageSize%22%3A100%7D'
     irsaURL = irsaURLPart1 + irsaURLPart2 + irsaURLPart3 + irsaURLPart4
     
+    
     # MAST Data portal
-    mstURLPart1 = 'https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html?searchQuery=%7B%22service%22%3A%22CAOMDB%22%2C%22inputText%22%3A%22'
-    mstURLPart2 = 'TIC%20{0:d}'.format(useTIC)
-    mstURLPart3 = '%22%2C%22paramsService%22%3A%22Mast.Caom.Cone%22%2C%22columns%22%3A%22*%22%2C%22caomVersion%22%3Anull%7D'
+    #mstURLPart1 = 'https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html?searchQuery=%7B%22service%22%3A%22CAOMDB%22%2C%22inputText%22%3A%22'
+    #mstURLPart2 = 'TIC%20{0:d}'.format(useTIC)
+    #mstURLPart3 = '%22%2C%22paramsService%22%3A%22Mast.Caom.Cone%22%2C%22columns%22%3A%22*%22%2C%22caomVersion%22%3Anull%7D'
+    mstURLPart1 = 'https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html?searchQuery={"service":"CAOMFILTERED","inputText":[{"paramName":"obs_collection","niceName":"obs_collection","values":[],"valString":"TESS","isDate":false,"separator":";","freeText":"TESS","displayString":"TESS"}],"position":"'
+    mstURLPart2 = '{0:f}, {1:f}, {2:f}",'.format(starRa,starDec,2.0/60.0/60.0)
+    mstURLPart3 = '"paramsService":"Mast.Caom.Filtered.Position","columns":"*"}'    
     mstURL = mstURLPart1 + mstURLPart2 + mstURLPart3
+    #print(mstURL)
 
     #Vizier search
     vizPOSTDict = {'-c': '2MASS J{0}'.format(star2mass)}
-    vizURLPart1 = 'http://vizier.u-strasbg.fr/viz-bin/VizieR-4?-out.max=50&-out.form=HTML+Table&-out.add=_r&-out.add=_RAJ%2C_DEJ&%2F%2Foutaddvalue=default&-sort=_r&-order=I&-oc.form=sexa&'
+    vizURLPart1 = 'http://vizier.u-strasbg.fr/viz-bin/VizieR-4?-out.max=50&-out.form=HTML+Table&-out.add=_r&-out.add=_RAJ+_DEJ&outaddvalue=default&-sort=_r&-order=I&-oc.form=sexa&'
     vizURLPart2 = dict_urlencode(vizPOSTDict)
     vizURLPart3 = '&-c.eq=J2000&-c.r=+30&-c.u=arcsec&-c.geom=r'
     vizURL = vizURLPart1 + vizURLPart2 + vizURLPart3
+    #print(vizURL)
 
     # exofop 
     exofopURL = 'https://exofop.ipac.caltech.edu/tess/target.php?id={0}'.format(useTIC)
@@ -636,14 +655,15 @@ if __name__ == '__main__':
 
     # We are go for GAIA Cone search
     ADSQL_Str = "SELECT \
-       phot_g_mean_mag, phot_rp_mean_mag, teff_val, teff_percentile_lower, \
-       teff_percentile_upper, radius_val, radius_percentile_lower,\
-       astrometric_gof_al, astrometric_excess_noise_sig, phot_bp_mean_mag, \
+       DISTANCE( POINT('ICRS', ra, dec),\
+       POINT('ICRS', {0}, {1}) ) AS dist, phot_g_mean_mag, teff_val, teff_percentile_lower, \
+       teff_percentile_upper, radius_val, radius_percentile_lower, radius_percentile_upper,\
+       astrometric_gof_al, astrometric_excess_noise_sig, phot_bp_mean_mag, phot_rp_mean_mag, bp_rp, \
        a_g_val, e_bp_min_rp_val, parallax, \
-       radius_percentile_upper, ra, dec, DISTANCE( POINT('ICRS', ra, dec),\
-       POINT('ICRS', {0}, {1}) ) AS dist, solution_id,ref_epoch \
+        ra, dec , solution_id \
         from gaiadr2.gaia_source WHERE 1 = CONTAINS( POINT('ICRS', ra, dec), \
         CIRCLE('ICRS', {0}, {1}, 0.016666666666666666)) order by dist".format(gaiaPredRa, gaiaPredDec)
+    #print(ADSQL_Str)
     job = Gaia.launch_job(ADSQL_Str)
     r = job.get_results()
     gaiaTeff = r['teff_val'][0]
@@ -691,8 +711,6 @@ if __name__ == '__main__':
     headers, outString = mastQuery(request)
     outObject = json.loads(outString)
     if not outObject['status'] == 'EXECUTING':
-    #    print(outObject)
-    #    print(outObject['data'])
         # Check if any objects returned
         if len(outObject['data']) > 0:
             # Now get list of obsids for the time series data
@@ -759,7 +777,10 @@ if __name__ == '__main__':
                 'G_Teff':'{0:7.1f}&plusmn{1:5.1f}'.format(gaiaTeff, gaiaTeffE),\
                 'G_Rstar':'{0:6.2f}&plusmn{1:4.1f}'.format(gaiaRad, gaiaRadE), \
                 'tesspStr':tesspStr, 'dvStr':dvStr, 'gaiaExStr':gaiaExStr, \
-                'tcutURL':tcutURL}
+                'tcutURL':tcutURL, 'gaiaURL':gaiaURL}
+    #print(htmlDict['mstURL'])
+    #print('{mstURL}'.format(**htmlDict))
+    #print('hello')
     #HTML TEMPLATE
     template = """
 <html>
@@ -819,10 +840,11 @@ th {{
 <a href="{exofopURL}" target="_blank">ExoFOP</a> |
 <a href="{simbadURL}" target="_blank">Simbad</a> |
 <a href="{vizURL}" target="_blank">Vizier</a> |
-<a href="{mstURL}" target="_blank">MAST TESS Data Holdings</a> |
+<a href='{mstURL}' target='_blank'>MAST TESS Data Holdings</a> |
 <a href="{irsaURL}" target="_blank">IRSA Finderchart</a> |
 <a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> |
-<a href="{tcutURL}" target="_blank">TESScut TPF Download</a>
+<a href="{tcutURL}" target="_blank">TESScut TPF Download</a> |
+<a href='{gaiaURL}' target='_blank'>GAIA DR2 60'' Cone Search @MAST</a> 
 <h2>NASA Ames SPOC DV Results Available at MAST</h2>
 {dvStr}
 <br>
@@ -837,18 +859,20 @@ th {{
     with open(path, 'w') as f:
         f.write(page_string)
 
-    # If the user requested a web explode load em all!
-    if args.explode:
-        webbrowser.open(esoURL, new=2)
-        webbrowser.open(irsaURL, new=2)
-        webbrowser.open(mstURL, new=2)
-        webbrowser.open(vizURL, new=2)
-        webbrowser.open(simbadURL, new=2)
-        webbrowser.open(exofopURL, new=2)  
-
-
-    # Load the webpage
-    webbrowser.open(url)
+    if not args.noweb:
+        # If the user requested a web explode load em all!
+        if args.explode:
+            webbrowser.open(gaiaURL, new=2)
+            webbrowser.open(esoURL, new=2)
+            webbrowser.open(irsaURL, new=2)
+            webbrowser.open(mstURL, new=2)
+            webbrowser.open(vizURL, new=2)
+            webbrowser.open(simbadURL, new=2)
+            webbrowser.open(exofopURL, new=2)  
+    
+    
+        # Load the webpage
+        webbrowser.open(url)
     
         
     
