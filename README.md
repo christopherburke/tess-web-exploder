@@ -40,10 +40,10 @@ Download twexo.py to a local directory
 ### AUTHORS
 Christopher J. Burke (MIT).  Testing and Advice from Susan Mullally (STScI), Jennifer Burt (MIT), Rolan Vanderspek (MIT), Eric Jensen (Swarthmore), and Karen Collins (CfA)
 
-### VERSION: 0.4
+### VERSION: 0.5
 
 ### WHAT'S NEW:
-V0.4
+V0.4 & 0.5
 - GAIA cone search link via MAST added. URL formatting changes in order to support wkhtmltopdf conversion to pdf saving.
 
 V0.3

@@ -33,7 +33,7 @@ USAGE:
 AUTHORS: Christopher J. Burke (MIT)
  Testing and Advice from Susan Mullally (STScI) and Jennifer Burt (MIT)
 
-VERSION: 0.4
+VERSION: 0.5
 
 NOTES: This routine opens tabs on your browser!
     This routine saves a local file for the html!
@@ -153,6 +153,8 @@ if __name__ == '__main__':
                         help="Pre-load all URLs into tabs of browser rather than just the link page")
     parser.add_argument("-nw", "--noweb", action='store_true', \
                         help="Do not open in web.  Only generate html that plays well with wkhtmltopdf conversion tool")
+    parser.add_argument("-of", "--outfile", nargs=1, type=str,\
+                        help="Override default html output filename [default (without this argument) is based on query].  DO NOT include .html in this argument")
                         
     args = parser.parse_args()
 
@@ -214,7 +216,10 @@ if __name__ == '__main__':
                 starPmRaE = 100.0
                 starPmDecE = 100.0
                 starPmTotE = 1000.0
-            starTeff = outObject['data'][0]['Teff']
+            if 'Teff' in oo:
+                starTeff = outObject['data'][0]['Teff']
+            else:
+                starTeff = 0.0
             if 'e_Teff' in oo:
                 starTeffE = outObject['data'][0]['e_Teff']
             else:
@@ -308,7 +313,11 @@ if __name__ == '__main__':
             starPmRaE = 100.0
             starPmDecE = 100.0
             starPmTotE = 1000.0
-        starTeff = outObject['data'][0]['Teff']
+
+        if 'Teff' in oo:
+            starTeff = outObject['data'][0]['Teff']
+        else:
+            starTeff = 0.0
         if 'e_Teff' in oo:
             starTeffE = outObject['data'][0]['e_Teff']
         else:
@@ -454,7 +463,10 @@ if __name__ == '__main__':
             starPmRaE = 100.0
             starPmDecE = 100.0
             starPmTotE = 1000.0
-        starTeff = outObject['data'][0]['Teff']
+        if 'Teff' in oo:
+            starTeff = outObject['data'][0]['Teff']
+        else:
+            starTeff = 0.0
         if 'e_Teff' in oo:
             starTeffE = outObject['data'][0]['e_Teff']
         else:
@@ -603,7 +615,9 @@ if __name__ == '__main__':
     if args.coord is not None:
         path = os.path.abspath('twexo_temp_{0}_{1:016d}.html'.format(DATE_STR,useTIC))
         ModeHeader = 'From input coordinates Using TIC: {0}'.format(useTIC)
-
+    if args.outfile is not None:
+        path = os.path.relpath(args.outfile[0]+'.html')
+    print(path)
     ticPos = 'Using TIC catalog position {0:.6f} {1:.6f} [J2000.0; epoch 2000.0]'.format(starRa, starDec)
     twoMassId = '2MASS J{0} From TIC'.format(star2mass)
     closeTICN = '{0} TIC entries within {1} arcsec of target {2}'.format(len(ticList)-1, SEARCH_RAD, useTIC)
@@ -760,7 +774,12 @@ if __name__ == '__main__':
             tesspStr = ' '.join(tpLines)
 
 
-
+    # Wkhtmltopdf is used to convert html to pdf
+    #  On certain platforms URLs don't work unless they are one per line
+    #  with args.noweb use a html line break
+    URLBreak = '|'
+    if args.noweb:
+        URLBreak = '<br>'
     # We had all the HTML strings, put them in a dictionary that will
     #  will be used for replacement in HTML template below        
     htmlDict = {'neighTIC':neighTICStr, 'closeTICN':closeTICN, \
@@ -777,7 +796,7 @@ if __name__ == '__main__':
                 'G_Teff':'{0:7.1f}&plusmn{1:5.1f}'.format(gaiaTeff, gaiaTeffE),\
                 'G_Rstar':'{0:6.2f}&plusmn{1:4.1f}'.format(gaiaRad, gaiaRadE), \
                 'tesspStr':tesspStr, 'dvStr':dvStr, 'gaiaExStr':gaiaExStr, \
-                'tcutURL':tcutURL, 'gaiaURL':gaiaURL}
+                'tcutURL':tcutURL, 'gaiaURL':gaiaURL, 'URLBreak':URLBreak}
     #print(htmlDict['mstURL'])
     #print('{mstURL}'.format(**htmlDict))
     #print('hello')
@@ -837,13 +856,13 @@ th {{
 </table>
 {gaiaExStr}
 <h2>Target Links</h2>
-<a href="{exofopURL}" target="_blank">ExoFOP</a> |
-<a href="{simbadURL}" target="_blank">Simbad</a> |
-<a href="{vizURL}" target="_blank">Vizier</a> |
-<a href='{mstURL}' target='_blank'>MAST TESS Data Holdings</a> |
-<a href="{irsaURL}" target="_blank">IRSA Finderchart</a> |
-<a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> |
-<a href="{tcutURL}" target="_blank">TESScut TPF Download</a> |
+<a href="{exofopURL}" target="_blank">ExoFOP</a> {URLBreak}
+<a href="{simbadURL}" target="_blank">Simbad</a> {URLBreak}
+<a href="{vizURL}" target="_blank">Vizier</a> {URLBreak}
+<a href='{mstURL}' target='_blank'>MAST TESS Data Holdings</a> {URLBreak}
+<a href="{irsaURL}" target="_blank">IRSA Finderchart</a> {URLBreak}
+<a href="{esoURL}" target="_blank">ESO Data Archive Holdings</a> {URLBreak}
+<a href="{tcutURL}" target="_blank">TESScut TPF Download</a> {URLBreak}
 <a href='{gaiaURL}' target='_blank'>GAIA DR2 60'' Cone Search @MAST</a> 
 <h2>NASA Ames SPOC DV Results Available at MAST</h2>
 {dvStr}
