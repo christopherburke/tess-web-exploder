@@ -83,7 +83,7 @@ if __name__ == '__main__':
             print('Working...')
             startTime = time.time()
         time.sleep(5)
-    print('Returned {0:d} Entries'.format(len(outObject['data'])))
+    print('#Returned {0:d} Entries'.format(len(outObject['data'])))
     ticList = [x['ID'] for x in outObject['data']]
     tMags = [x['Tmag'] for x in outObject['data']]
     ras = [x['ra'] for x in outObject['data']]
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     twomass = [x['TWOMASS'] for x in outObject['data']]
     
     for i in range(len(ticList)):
-        str='{0:d} {1}'.format(ticList[i], twomass[i])
+        str='{0:d} {1:f} {2:f}'.format(ticList[i], ras[i], decs[i])
         print(str)
     
 
